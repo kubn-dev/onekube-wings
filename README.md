@@ -1,2 +1,3 @@
 # onekube-wings
-Client's projects
+
+Minimal components for client projects.

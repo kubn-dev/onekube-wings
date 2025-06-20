@@ -1,0 +1,6 @@
+apiVersion: v2
+name: wings
+description: Kube0 Wings Helm Chart
+type: application
+version: 1.3.5
+appVersion: "1.3.5"

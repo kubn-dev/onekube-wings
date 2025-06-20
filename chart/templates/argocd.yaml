@@ -1,0 +1,83 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: {{ .Values.project }}
+  namespace: argocd
+spec:
+  clusterResourceWhitelist:
+    - group: '*'
+      kind: '*'
+  description: "Kube0 Wing {{ .Values.ulid }} project"
+  destinations:
+    - namespace: argocd
+      server: https://kubernetes.default.svc
+    - namespace: crossplane-system
+      server: https://kubernetes.default.svc
+    - namespace: {{ .Values.namespace }}
+      server: https://kubernetes.default.svc
+  sourceNamespaces:
+    - argocd
+  sourceRepos:
+    - '*'
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: {{ .Values.project }}
+  namespace: argocd
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: scaleway
+    kind: ClusterSecretStore
+  target:
+    name: {{ .Values.project }}
+    creationPolicy: Owner
+    template:
+      engineVersion: v2
+      metadata:
+        labels:
+          argocd.argoproj.io/secret-type: repository
+      data:
+        name: {{ include "repository.name" . }}
+        username: {{ include "repository.username" . }}
+        password: "{{ `{{ .password }}` }}"   
+        project: {{ include "repository.project" . }}
+        type: {{ include "repository.type" . }}
+        url: {{ include "repository.url" . }}
+  data:
+    - secretKey: password
+      remoteRef:
+        key: "name:github-token-write"
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: wing-{{ .Values.ulid }}-userspace
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: {{ .Values.project }}
+  source:
+    repoURL:  {{ include "repository.url" . }}
+    targetRevision: HEAD
+    path: userspace
+    directory:
+      recurse: true
+      include: '*.yaml'
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: {{ .Values.namespace }}
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+    syncOptions:
+    - CreateNamespace=true
+    - PrunePropagationPolicy=foreground
+    - PruneLast=true
+    - RespectIgnoreDifferences=true
+    - ApplyOutOfSyncOnly=true
+    - SkipDryRunOnMissingResource=true
