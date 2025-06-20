@@ -1,0 +1,42 @@
+apiVersion: aws.upbound.io/v1beta1
+kind: ProviderConfig
+metadata:
+  name: provider-family-aws-{{ .Values.ulid }}
+spec:
+  credentials:
+    source: Secret
+    secretRef:
+      namespace: {{ .Values.namespace }}
+      name: "provider-family-aws-config-{{ .Values.ulid }}"
+      key: creds
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: provider-family-aws-config
+  namespace: {{ .Values.namespace }}
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: scaleway
+    kind: ClusterSecretStore
+  target:
+    name: "provider-family-aws-config-{{ .Values.ulid }}"
+    creationPolicy: Owner
+  data:
+    - secretKey: creds
+      remoteRef:
+        key: "name:provider-family-aws-config-{{ .Values.ulid }}"
+---
+apiVersion: gcp.upbound.io/v1beta1
+kind: ProviderConfig
+metadata:
+  name: provider-family-gcp-{{ .Values.ulid }}
+spec:
+  credentials:
+    source: Secret
+    secretRef:
+      namespace: {{ .Values.namespace }}
+      name: "provider-family-gcp-config-{{ .Values.ulid }}"
+      key: creds
+  projectID: onekube-{{ .Values.ulid }}

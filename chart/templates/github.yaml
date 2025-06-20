@@ -1,0 +1,16 @@
+apiVersion: repo.github.upbound.io/v1alpha1
+kind: Repository
+metadata:
+  name: {{ .Values.project }}
+spec:
+  forProvider:
+    name: {{ .Values.project }}
+    description: "OneKube Wings project for {{ .Values.project }}"
+    private: true
+    autoInit: true
+    template:
+      - owner: kubn-dev
+        repository: onekube-wings-template
+  providerConfigRef:
+    name: provider-github-config
+
